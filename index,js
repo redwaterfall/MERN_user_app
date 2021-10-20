@@ -1,0 +1,52 @@
+const express = require('express');
+const app = express()
+const db = require('./db');
+const cors = require('cors')
+
+app.use(
+    cors()
+)
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    next();
+  });
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));//må ha for å sende req.body
+app.use(express.static('public'));
+//let id = 2;
+let tableName = 'users'
+
+app.get('/users',async (req,res)=>{
+    let response = await db.promise().query(`SELECT * FROM ${tableName};`);
+    res.send(response[0])
+})
+app.put('/users',async (req,res)=>{
+    //id++;
+    //let {name,email} = req.body;
+    //let {name} = req.body
+    //let test = req.body;
+    let {name,email} = await req.body;
+    try{
+        db.promise().query(`INSERT INTO users(name,email) VALUES('${name}','${email}');`)
+        //console.log({test})
+        console.log(name)
+        console.log(email)
+        res.status(202).send(`succesfully put ${name} and ${email} in database`)
+    }
+    catch(e){
+        res.status(404).send('Error putting in database');
+    }
+})
+app.delete('/users', async (req,res)=>{
+    let {name,email} = await req.body; 
+    try{
+        db.promise().query(`DELETE FROM users WHERE name='${name}' OR email='${email}'`);
+        res.status(202).send(`successfully deleted`)
+    }
+    catch(error){
+        res.status(404).send(error);
+    }
+});
+app.listen(PORT,()=>{console.log(`listening on PORT ${PORT}`)})
